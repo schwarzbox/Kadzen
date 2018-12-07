@@ -1,8 +1,8 @@
 # Kadzen-LÖVE
 
-Kadzen is a shoot them all game combined with a randomly generated levels.
+"Kadzen" is a Shoot Them All game combined with a randomly generated levels.
 
-Goal: Run through the labyrinth full of the angry robots. Use TNT to destroy walls and robots. Find a button to open door to the next level. Collect useful items or buy them in Z.NET. More TNT - more FUN!
+Goal: Run through the labyrinth. Find a button to open door to the next level. Use TNT to destroy walls and robots. Collect useful items or buy them in Z.NET. More TNT - more FUN!
 
 Controls: 'W' or '↑' - move up, 'A' or '→'' - move right, 'D' '←' - move left, 'S' '↓' - move down, SPACE' - throw TNT.
 
