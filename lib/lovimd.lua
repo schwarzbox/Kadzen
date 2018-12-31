@@ -293,12 +293,12 @@ function IMD.form(form,color,sx,sy)
         vertex={nwpoint,0,nepoint,0,sx,hexside,nepoint,sx,nwpoint,sx,0,hexside}
     end
 
-    color = color or BLACK
+    color = color or WHITE
     local forms = {
-        ['rect']=function()love.graphics.rectangle("fill",0,0,sx,sy) end,
-        ['circle']=function() love.graphics.circle("fill",sx/2,sy/2,sx/2) end,
-        ['tri']=function() love.graphics.polygon("fill",vertex) end,
-        ['hex']=function() love.graphics.polygon("fill",vertex) end
+        ['rect']=function()love.graphics.rectangle('fill',0,0,sx,sy) end,
+        ['circle']=function() love.graphics.circle('fill',sx/2,sy/2,sx/2) end,
+        ['tri']=function() love.graphics.polygon('fill',vertex) end,
+        ['hex']=function() love.graphics.polygon('fill',vertex) end
     }
 
     local canvas = love.graphics.newCanvas(sx,sy)
@@ -318,12 +318,25 @@ function IMD.grad(imgdata)
     local msx,msy = math.floor(sx/2), math.floor(sy/2)
     local r,g,b,a = imgdata:getPixel(msx, msy)
     local step = a/msx
-    local alpha = a
-     for i=1,msx-1 do
-        local tmp = IMD.circlePixels(i)
-        alpha = alpha - step
+    for i=1,msx do
+        local tmp = IMD.circlePixels(i-1)
+        a = a - step
         for j=1, #tmp do
-            data:setPixel(msx+tmp[j][1], msy+tmp[j][2],{r,g,b,alpha})
+            data:setPixel(msx+tmp[j][1], msy+tmp[j][2],{r,g,b,a})
+        end
+    end
+    return data
+end
+
+function IMD.contrast(imgdata,cont)
+    local sx, sy = imgdata:getDimensions()
+    local data = love.image.newImageData(sx,sy)
+    for x=1, sx do
+        for y=1, sy do
+            local r,g,b,a = imgdata:getPixel(x-1, y-1)
+            if a>cont then
+                data:setPixel(x-1,y-1, r,g,b,1)
+            end
         end
     end
     return data

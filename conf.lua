@@ -1,4 +1,4 @@
--- conf love2d KADZEN
+-- conf KADZEN
 
 function love.conf(t)
     -- The name of the save directory (string)

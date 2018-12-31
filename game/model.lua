@@ -66,10 +66,10 @@ function Model:new()
             upgrade={set.MIDTILEWID+4,set.TILEWID-1,
                    2,set.MIDTILEHEI,num=1}},
             }
-    self.gameaud = set.AUD['game']
-    self.gameaud:setVolume(0)
-    self.gameaud:setLooping(true)
-    self.gameaud:play()
+
+    set.AUD['game']:setVolume(0)
+    set.AUD['game']:setLooping(true)
+    set.AUD['game']:play()
     self:restart()
 end
 
@@ -92,9 +92,14 @@ function Model:restart()
     self.sfire = self:objectParticle(10, {set.WHITEF,set.ORANGE,set.WHITEHF},
                                      'circle', {0.05,0.8},{0,0.4},256)
     View:set_start_scr()
+    self.tmr:tween(2, self, {fade=1})
+
+    local ix, iy = self.sfirex, self.sfirey+14
+    self.tmr:every(0.1,function() self:initfire(ix,iy,0.07,20) end)
 end
 
 function Model:reset()
+    self.tmr:clear()
     if self.objects then
         for i=#self.objects,1,-1 do
             if self.objects[i].tmr then self.objects[i].tmr:clear() end
@@ -106,7 +111,7 @@ function Model:reset()
     -- clear batch sprites tables
     obj.Floor:clear()
     obj.Wall:clear()
-    self.fade = 32/255
+    self.fade = 0
     self.maze = nil
     self.items = nil
 end
@@ -183,22 +188,6 @@ function Model:save_stat()
     self.stat.chip.val = self.avatar:get_chip()
 end
 
-function Model:nextmaze()
-    self.level=self.level+1
-    self:reset()
-    self:set_maze(self.levels[self.level].maze,
-                  self.levels[self.level].mons,
-                  self.levels[self.level].key,
-                  self.levels[self.level].ammo,
-                  self.levels[self.level].hp,
-                  self.levels[self.level].upgrade)
-    View:set_level_scr(self.level)
-end
-
-function Model:nextlevel()
-    self.tmr:tween(1, self, {fade=1})
-    View:set_game_scr()
-end
 
 function Model:set_bonus(bonus,val,tag,type,door)
     local xval, yval
@@ -378,26 +367,49 @@ function Model:set_maze(type,mons,keynum,ammonum,hpnum,upgradenum)
     self:set_stat()
 end
 
+function Model:market()
+    love.mouse.setVisible(true)
+    View:set_market_scr()
+    self.tmr:tween(2, self, {fade=0})
+end
+
+function Model:nextmaze()
+    self.level=self.level+1
+    self:reset()
+    self:set_maze(self.levels[self.level].maze,
+                  self.levels[self.level].mons,
+                  self.levels[self.level].key,
+                  self.levels[self.level].ammo,
+                  self.levels[self.level].hp,
+                  self.levels[self.level].upgrade)
+    View:set_level_scr(self.level)
+    self.tmr:tween(2, self, {fade=1})
+end
+
+function Model:nextlevel()
+    View:set_game_scr()
+end
+
+function Model:initfire(x,y,size,speed)
+    local ifire = self:objectParticle(1, {set.BLACK,set.ORANGE,set.WHITEHF},
+                            set.IMG['fire'], {0.05,0.5},{0,size},128)
+    ifire.particle:setPosition(x,y)
+    ifire.particle:setSpeed(0,speed)
+    ifire.particle:setDirection(-1.5)
+    ifire.particle:emit(50)
+end
+
 function Model:startgame()
     Ctrl:unbind('space')
     Ctrl:bind('space','fire')
     self.startfire = true
-    local ifire = self:objectParticle(1, {set.BLACK,set.ORANGE,set.WHITEHF},
-                            set.IMG['fire'], {0.05,0.5},{0,0.15},128)
-    ifire.particle:setPosition(self.sfirex,self.sfirey+10)
-    ifire.particle:setSpeed(0,300)
-    ifire.particle:setDirection(-1.5)
-    ifire.particle:emit(50)
+    self.tmr:clear()
+    self:initfire(self.sfirex,self.sfirey+12,0.15,300)
     set.AUD['start']:play()
     set.AUD['tnt']:setVolume(0.2)
     set.AUD['tnt']:play()
-    self.tmr:tween(2, self, {sfirex=self.sfirex-15,sfirey=self.sfirey+10},
+    self.tmr:tween(2,self,{sfirex=self.sfirex-15,sfirey=self.sfirey+12,fade=0},
                    'linear',function() self:nextmaze() end)
-end
-
-function Model:market()
-    love.mouse.setVisible(true)
-    View:set_market_scr()
 end
 
 function Model:update(dt)
@@ -438,16 +450,13 @@ function Model:update(dt)
             end
         end
     end
-    self.gameaud:setVolume(self.fade)
+    set.AUD['game']:setVolume(self.fade)
     View:get_ui().Manager.update(dt)
 end
 
 function Model:endgame(dead)
-    love.audio.stop()
-    love.audio.play(set.AUD['game'])
-
+    self.tmr:tween(2, self, {fade=0})
     self:save_stat()
-    self.fade = 32/255
     if dead then
         View:set_fin_scr('GAME OVER')
         self.save_gamestat(1,1,1,self.stat.chip.val)
@@ -456,6 +465,7 @@ function Model:endgame(dead)
         local hp,ammo,dist,chip = Model:get_stat()
         self.save_gamestat(hp,ammo,dist,chip)
     end
+
     Ctrl:unbind('space')
     Ctrl:bind('space','start',function() self:restart() end)
 end

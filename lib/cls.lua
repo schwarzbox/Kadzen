@@ -58,7 +58,8 @@ function CLS.Class(Super,class)
 
     meta.__call = function(self,o)
                     o = o or {}
-                    o.id = id()
+                    -- o.id = id()
+                    o.id = self
                     self.__index = self
                     self = setmetatable(o, self)
                     if self.new then self.new(self, o) end
@@ -66,7 +67,7 @@ function CLS.Class(Super,class)
                 end
     -- merge class
     meta.__add = function (self, oth)
-                    local New = CLS.Cls(self)
+                    local New = CLS.Class(self)
                     for k,v in pairs(oth) do New[k] = v  end
                     return New
                 end

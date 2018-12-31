@@ -24,11 +24,13 @@ function View:set_start_scr()
             text=set.APPNAME:upper(), frm=0, fnt=set.TITLEFNT}
 
     ui.Button{x=set.MIDWID-114, y=set.MIDHEI+40,
-                image=set.IMG['znet'], frm=0, fnt=set.MENUFNT,
+                image=set.IMG['znet'], frm=0,
+                fnt=set.MENUFNT, fntclr=set.LIGHTGRAY,
                 com=function() Model:market() end}
 
     ui.Button{x=set.MIDWID+182, y=set.MIDHEI+366, anchor='s',
-            image=set.IMG['start'], frm=0, fnt=set.TITLEFNT,
+            image=set.IMG['start'], frm=0,
+            fnt=set.TITLEFNT,fntclr=set.LIGHTGRAY,
             com=function() Model:startgame() end}
 
     local copyright = ui.HBox{x=set.MIDWID, y=set.HEI-4, anchor='s', sep=16}
@@ -105,23 +107,23 @@ function View:set_level_scr(level)
     ui.Manager.clear()
     local leveltext = 'LEVEL '..level
     if level == 4 then leveltext = 'KILL THEM ALL!' end
-    ui.LabelExe{x=set.MIDWID,y=set.MIDHEI,text=leveltext,time=60,
+    ui.LabelExe{x=set.MIDWID,y=set.MIDHEI,text=leveltext,time=90,
             fnt=set.TITLEFNT,com=function() Model:nextlevel() end}
 end
 function View:set_game_scr()
     self.screen = 'game_scr'
     ui.Manager.clear()
     local avatar = Model:get_avatar()
-    local bars = ui.HBox{x=0,y=0,anchor='nw',sep=12}
+    local bars = ui.HBox{x=2,y=1,anchor='nw',sep=12}
     local hplab = ui.Label{image=imd.resize(obj.Hp.img_lab,
                                 set.SCALE),fntclr=set.WHITE}
     local hpbar = ui.ProgBar{image=imd.resize(obj.Hp.img_bar,
-                                set.SCALE),frmclr=set.WHITE,
+                                set.SCALE),fntclr=set.WHITE,
                                 var=avatar.hp,frm=0,max=set.MAXHP}
     local ammolab = ui.Label{image=imd.resize(obj.Ammo.img_lab,
                                             set.SCALE),fntclr=set.WHITE}
     local ammobar = ui.ProgBar{image=imd.resize(
-                            obj.Bomb.imgdata,set.SCALE),frmclr=set.WHITE,
+                            obj.Bomb.imgdata,set.SCALE),fntclr=set.WHITE,
                                 var=avatar.ammo,frm=0,max=set.MAXAMMO}
     local chiplab = ui.Label{image=imd.resize(obj.Chip.img_lab,
                                                 set.SCALE),fntclr=set.WHITE}

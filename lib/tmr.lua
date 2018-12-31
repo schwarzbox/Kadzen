@@ -203,14 +203,12 @@ function Ease.outInBounce(elapsed,st,diff,time)
 end
 
 local destroy
-
 local TMR = {}
 function TMR:new()
     self.__index = self
     self = setmetatable({},self)
+    self.alltmr = {}
     self:clear()
-    self.alltmr = {self.aftertmr, self.everytmr,
-                    self.duringtmr, self.tweentmr,self.scripttmr}
     local update
     if  love and love.update then
         update = love.update
@@ -266,9 +264,16 @@ function TMR:remove(timer)
 end
 
 function TMR:clear()
+    for i=1, #self.alltmr do
+        for timer in pairs(self.alltmr[i]) do
+            self.alltmr[i][timer] = nil
+        end
+    end
     self.aftertmr = {} self.everytmr = {}
     self.duringtmr = {} self.tweentmr = {}
     self.scripttmr = {}
+    self.alltmr = {self.aftertmr,self.everytmr,self.duringtmr,
+                    self.tweentmr,self.scripttmr}
 end
 
 function TMR:after(time,func,key)

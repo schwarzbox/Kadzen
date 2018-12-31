@@ -28,10 +28,15 @@
 -- Music by Eric Matyas
 -- www.soundimage.org
 
+-- v2.0
+-- show hero
+-- tutorial
+
 -- old lua version
 local unpack = table.unpack or unpack
 local utf8 = require('utf8')
 
+local fc = require('lib/fct')
 local ui = require('lib/lovui')
 
 Model = love.filesystem.load('game/model.lua')()
@@ -73,14 +78,13 @@ function love.load()
     Ctrl:bind('left','arrLeftStop')
     -- game
     Ctrl:bind('space','start',function() Model:startgame() end)
-    Ctrl:bind('lgui+p','pause', function() Model:set_pause() end)
-    Ctrl:bind('lgui+r','restart', function() love.event.quit('restart') end)
-    Ctrl:bind('escape','quit',function() love.event.quit() end)
+    Ctrl:bind('escape','pause', function() Model:set_pause() end)
+    Ctrl:bind('lgui+r','cmdr', function() love.event.quit('restart') end)
     Ctrl:bind('lgui+q','cmdq',function() love.event.quit(1) end)
 end
 
 function love.update(dt)
-    local upd_title = string.format('%s %s', set.APPNAME, set.VER)
+    local upd_title = string.format('%s %s',set.APPNAME, set.VER)
     love.window.setTitle(upd_title)
 
     -- update model
@@ -113,8 +117,7 @@ function love.update(dt)
     -- ctrl gamed
     Ctrl:press('start')
     Ctrl:press('pause')
-    Ctrl:press('restart')
-    Ctrl:press('quit')
+    Ctrl:press('cmdr')
     Ctrl:press('cmdq')
 end
 

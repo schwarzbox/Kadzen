@@ -26,9 +26,17 @@
 -- DEALINGS IN THE SOFTWARE.
 
 -- 3.0
+-- + add main color func
+-- + highlight slider handle
+-- slider float
 -- Add drag event for ProgBar.
+-- (semi transparent box with values)
 -- Make handle fof HBox VBox to drag item.
 -- Add fold button for HBox VBox.
+
+-- FoldList and List self.sel last added
+-- foldlist stop click when on top
+
 -- Refactor Hbox remove function.
 -- 3.5
 -- utf-8 support
@@ -44,32 +52,16 @@ local utf8 = require('utf8')
 
 local EMPTY = {1,1,1,0}
 local WHITE = {1,1,1,1}
+local DT=0.017
 local FNTCLR = {128/255,128/255,128/255,1}
 local FRMCLR = {64/255,64/255,64/255,1}
-local BOXCLR = {64/255-0.1,64/255-0.1,64/255-0.1,1}
-local POPCLR = {64/255-0.05,64/255-0.05,64/255-0.05,0.95}
+local BOXCLR = {FRMCLR[1]-0.1,FRMCLR[2]-0.1,FRMCLR[3]-0.1,1}
+local POPCLR = {FRMCLR[1]-0.05,FRMCLR[2]-0.05,FRMCLR[3]-0.05,0.9}
 local FNT = {nil,16}
-
-local UI = {DT=0.017,kpress={},krelease={},mpress={},mrelease={},
+local UI = {kpress={},krelease={},mpress={},mrelease={},
             mouse={0,0,0,0,false},wheel={0,0}}
-function UI.load()
-    local events = {'keypressed','keyreleased','mousepressed',
-            'mousereleased','mousemoved','wheelmoved','update'}
-    -- add to love
-    local default = {}
-    for i=1,#events do
-        default[events[i]] = love[events[i]] or function() end
-        love[events[i]] = function(...)
-            local output = {default[events[i]](...)}
-            if #output>0 then
-                UI[events[i]](unpack(output))
-                return unpack(output)
-            else UI[events[i]](...) end
-        end
-    end
-end
 -- OOP
-function UI.Class(Super, class)
+local function Class(Super, class)
     Super = Super or {}
     class = class or {}
     class.Super = Super
@@ -89,8 +81,25 @@ function UI.Class(Super, class)
     end
     return setmetatable(class,meta)
 end
--- private
-function UI.update(dt) UI.DT=dt UI.clearActions() end
+
+function UI.load()
+    local events = {'keypressed','keyreleased','mousepressed',
+            'mousereleased','mousemoved','wheelmoved','update'}
+    -- add to love
+    local default = {}
+    for i=1,#events do
+        default[events[i]] = love[events[i]] or function() end
+        love[events[i]] = function(...)
+            local output = {default[events[i]](...)}
+            if #output>0 then
+                UI[events[i]](unpack(output))
+                return unpack(output)
+            else UI[events[i]](...) end
+        end
+    end
+end
+
+function UI.update(dt) DT=dt UI.clearActions() end
 
 function UI.keypressed(key,unicode,isrepeat)
     UI.kpress = {key,unicode,isrepeat}
@@ -113,7 +122,6 @@ function UI.mousepress() return unpack(UI.mpress) end
 function UI.mouserelease() return unpack(UI.mrelease) end
 function UI.mousemove() return unpack(UI.mouse) end
 function UI.wheelmove() return unpack(UI.wheel) end
-function UI.getDT() return UI.DT end
 function UI.clearActions()
     UI.kpress={}
     UI.krelease={}
@@ -158,8 +166,28 @@ function UI.Manager.focus(bool)
     end
 end
 
+function UI.Manager.color(fntclr,frmclr)
+    fntclr = fntclr or FNTCLR
+    frmclr = frmclr or FRMCLR
 
-local Proto = UI.Class({x=nil, y=nil, anchor='center', frm=0, frmclr=FRMCLR,
+    FNTCLR[1] = fntclr[1]
+    FNTCLR[2] = fntclr[2]
+    FNTCLR[3] = fntclr[3]
+    FNTCLR[4] = fntclr[4]
+    FRMCLR[1] = frmclr[1]
+    FRMCLR[2] = frmclr[2]
+    FRMCLR[3] = frmclr[3]
+    FRMCLR[4] = frmclr[4]
+    BOXCLR[1] = frmclr[1]-0.1
+    BOXCLR[2] = frmclr[2]-0.1
+    BOXCLR[3] = frmclr[3]-0.1
+    POPCLR[1] = frmclr[1]-0.05
+    POPCLR[2] = frmclr[2]-0.05
+    POPCLR[3] = frmclr[3]-0.05
+end
+
+
+local Proto = Class({x=nil, y=nil, anchor='center', frm=0, frmclr=FRMCLR,
                 mode='line',wid=0,hei=0,corner={0,0,0},hide=false,focus=true})
 function Proto:__tostring() return self.type end
 function Proto:set(args) for k,v in pairs(args) do self[k] = v end end
@@ -296,7 +324,7 @@ function Proto:wheelMove()
 end
 
 
-UI.Sep = UI.Class(Proto)
+UI.Sep = Class(Proto)
 UI.Sep.type = 'sep'
 function UI.Sep:new(o)
     self.deffrm = self.frmclr
@@ -316,10 +344,10 @@ function UI.Sep:setup()
 end
 
 function UI.Sep:draw() if not self.hide then self:drawFrame() end end
-function UI.Sep:update(dt) dt = dt or UI.getDT() self:setup() end
+function UI.Sep:update(dt) dt = dt or DT self:setup() end
 
 
-UI.HBox = UI.Class(Proto,{frmclr=BOXCLR,sep=8,drag=false})
+UI.HBox = Class(Proto,{frmclr=BOXCLR,sep=8,drag=false})
 UI.HBox.type = 'hbox'
 function UI.HBox:new(o)
     self.deffrm = self.frmclr
@@ -380,7 +408,9 @@ end
 function UI.HBox:setFnt(fnt)
     self.fnt=fnt
     for i=1,#self.items do
-        if self.items[i] and self.fnt then self.items[i]:setFnt(fnt) end
+        if self.items[i] and self.fnt and self.items[i].setFnt then
+            self.items[i]:setFnt(fnt)
+        end
     end
 end
 
@@ -394,7 +424,7 @@ end
 
 function UI.HBox:draw() if not self.hide then self:drawFrame() end end
 function UI.HBox:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         if self:mouseCollideDown(1) and self.drag then
@@ -412,7 +442,7 @@ function UI.HBox:remove()
 end
 
 
-UI.VBox = UI.Class(UI.HBox)
+UI.VBox = Class(UI.HBox)
 UI.VBox.type = 'vbox'
 function UI.VBox:setup()
     local wid,hei = 0,0
@@ -458,7 +488,7 @@ function UI.VBox:setup()
 end
 
 
-UI.PopUp = UI.Class(UI.VBox,{frmclr=POPCLR,focus=false})
+UI.PopUp = Class(UI.VBox,{frmclr=POPCLR,focus=false})
 UI.PopUp.type = 'popup'
 function UI.PopUp:new()
     self.items = {}
@@ -495,7 +525,7 @@ function UI.PopUp:add(...)
 end
 
 function UI.PopUp:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         if self:mousePress(1) and not self:mouseCollide() then
@@ -516,7 +546,7 @@ function UI.PopUp:update(dt)
 end
 
 
-UI.Label = UI.Class(Proto,{text='', fnt=FNT, fntclr=FNTCLR,
+UI.Label = Class(Proto,{text='', fnt=FNT, fntclr=FNTCLR,
                 var=nil, com=function() end, image=nil,
                 angle=0, da=0, scalex=1, scaley=1, scewx=0,scewy=0})
 UI.Label.type = 'label'
@@ -572,11 +602,6 @@ end
 function UI.Label:setAngle(angle) self.angle=math.rad(angle) end
 function UI.Label:setDA(da) self.da=math.rad(da) end
 
-function UI.Label:setColor()
-    self.deffrm = self.frmclr
-    self.defclr = self.fntclr
-end
-
 function UI.Label:getRepeat(event,eventarg,dt)
     if self.repeattime then
         if self.repeattime>0 then
@@ -587,6 +612,11 @@ function UI.Label:getRepeat(event,eventarg,dt)
             return press
         end
     end
+end
+
+function UI.Label:setClr()
+    self.deffrm = self.frmclr
+    self.defclr = self.fntclr
 end
 
 function UI.Label.getWidHei(item,other)
@@ -601,7 +631,7 @@ function UI.Label:updateAngle()
 end
 
 function UI.Label:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:updateAngle()
     self:setup()
     if self.focus and not self.hide then
@@ -636,7 +666,7 @@ function UI.Label:draw()
 end
 
 
-UI.Input = UI.Class(UI.Label,{frm=2,focus=false,chars=8,mode='line'})
+UI.Input = Class(UI.Label,{frm=2,focus=false,chars=8,mode='line'})
 UI.Input.type = 'input'
 function UI.Input:new(o)
     local textinput = love.textinput or function() end
@@ -655,6 +685,7 @@ function UI.Input:new(o)
     -- set fnt with cursor
     self:setFnt(self.fnt)
     -- input setup
+    self:setup()
     self:clear(true)
 end
 
@@ -802,7 +833,7 @@ function UI.Input:draw()
 end
 
 function UI.Input:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     if self.blink>0 then self.blink = self.blink-dt
     else self.blink = self.curblink end
     -- cursor
@@ -857,7 +888,7 @@ end
 function UI.Input:remove() self.cursor:remove() UI.Manager.remove(self) end
 
 
-UI.CheckBox = UI.Class(UI.Label,{frm=2, mode='fill',corner={4,4,2}})
+UI.CheckBox = Class(UI.Label,{frm=2, mode='fill',corner={4,4,2}})
 UI.CheckBox.type = 'checkbox'
 function UI.CheckBox:new(o)
     self.var = self.var or {bool=false}
@@ -866,7 +897,7 @@ function UI.CheckBox:new(o)
 end
 
 function UI.CheckBox:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:updateAngle()
     self:setup()
 
@@ -885,10 +916,10 @@ function UI.CheckBox:update(dt)
 end
 
 
-UI.LabelExe = UI.Class(UI.Label,{time=60})
+UI.LabelExe = Class(UI.Label,{time=60})
 UI.LabelExe.type = 'labelexe'
 function UI.LabelExe:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:updateAngle()
     self:setup()
 
@@ -897,7 +928,7 @@ function UI.LabelExe:update(dt)
 end
 
 
-UI.Button = UI.Class(UI.Label,{frm=2,corner={4,4,2}})
+UI.Button = Class(UI.Label,{frm=2,corner={4,4,2}})
 UI.Button.type = 'button'
 function UI.Button:new()
     UI.Button.Super.new(self)
@@ -905,7 +936,7 @@ function UI.Button:new()
     self.inittime=nil
 end
 function UI.Button:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:updateAngle()
     self:setup()
 
@@ -916,7 +947,7 @@ function UI.Button:update(dt)
         if self:mouseCollide() then
             self.defclr = self.onclr
         else
-            self:setColor()
+            self:setClr()
         end
 
         if press then
@@ -926,18 +957,18 @@ function UI.Button:update(dt)
 
         local repress = self:getRepeat(self.mouseCollideDown,1,dt)
         if repress then
-            self:setColor()
+            self:setClr()
             self:com()
             return repress
         end
 
-        if release then self:setColor() self:com() end
+        if release then self:setClr() self:com() end
         return press
     end
 end
 
 
-UI.Selector = UI.Class(UI.Label, {var={val=''},corner={4,4,2}})
+UI.Selector = Class(UI.Label, {var={val=''},corner={4,4,2}})
 UI.Selector.type = 'selector'
 function UI.Selector:setup()
     if self.var.val==self.text then self.defclr = self.onclr
@@ -946,7 +977,7 @@ function UI.Selector:setup()
 end
 
 function UI.Selector:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:updateAngle()
     self:setup()
     if self.focus and not self.hide then
@@ -960,7 +991,7 @@ function UI.Selector:update(dt)
 end
 
 
-UI.Counter = UI.Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
+UI.Counter = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
                     com=function() end,image=nil,sep=4,step=1,min=0,max=1000})
 UI.Counter.type = 'counter'
 function UI.Counter:new(o)
@@ -1022,7 +1053,7 @@ function UI.Counter:sub()
 end
 
 function UI.Counter:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setMinMax()
     self:setup()
     if self.focus and not self.hide then
@@ -1032,7 +1063,7 @@ function UI.Counter:update(dt)
 end
 
 
-UI.Slider = UI.Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
+UI.Slider = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
                    image=nil,sep=4,step=1,min=0,max=100})
 UI.Slider.type = 'slider'
 function UI.Slider:new(o)
@@ -1041,7 +1072,6 @@ function UI.Slider:new(o)
     self:setMinMax()
     -- find max chars for display field
     local chars = string.len(tostring(self.max))+1
-    self.onfrm = {self.frmclr[1]+0.2,self.frmclr[2]+0.2,self.frmclr[3]+0.2,1}
 
     self.txt = nil
     if self.text and #self.text>0 then
@@ -1051,8 +1081,8 @@ function UI.Slider:new(o)
 
     local barfrm = 2
     if self.image then barfrm = 0 end
-    self.bar = UI.Label{fnt=self.fnt, fntclr=self.onfrm, image=self.image,
-                frm=barfrm, frmclr=self.onfrm, mode='fill',corner={10,10,10}}
+    self.bar = UI.Button{fnt=self.fnt, fntclr=self.fntclr, image=self.image,
+                frm=barfrm, frmclr=self.fntclr, mode='fill',corner={10,10,10}}
     -- setup cursor wid and max len
     self:setSize()
     self.border:add(self.bar)
@@ -1064,19 +1094,18 @@ function UI.Slider:new(o)
                     self.bar:set({x=oldx+self.var.val})
                     end})
     self.border:set({draw = function()
-            if not self.hide then
-                local frmclr = self.border:get('deffrm') or EMPTY
-                love.graphics.setColor(frmclr)
-                local wid = self.border:get('wid')
-                local hei = self.border:get('hei')
-                local frm = 2
-                local rectx = self.border:get('rectx')
-                local recty = self.border:get('recty')
-                love.graphics.rectangle('fill',rectx+frm, recty-frm+hei/2,
-                                                wid,frm*2)
-                love.graphics.setColor(WHITE)
-            end
-            end})
+        if not self.hide then
+            local frmclr = self.border:get('deffrm') or EMPTY
+            love.graphics.setColor(frmclr)
+            local wid = self.border:get('wid')
+            local hei = self.border:get('hei')
+            local frm = 2
+            local rectx = self.border:get('rectx')
+            local recty = self.border:get('recty')
+            love.graphics.rectangle('fill',rectx+frm,recty-frm+hei/2,wid,frm*2)
+            love.graphics.setColor(WHITE)
+        end
+        end})
 
     self.display = UI.Label{text=string.rep('0', chars),
                     fnt=self.fnt, fntclr=self.fntclr, var=self.var,
@@ -1127,7 +1156,7 @@ function UI.Slider:setSize()
 end
 
 function UI.Slider:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         local press = self:mouseCollidePress(1)
@@ -1137,7 +1166,7 @@ function UI.Slider:update(dt)
 end
 
 
-UI.ProgBar = UI.Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
+UI.ProgBar = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
             frm=2,image=nil,barchar='|',barmode='fill',sep=4,min=0,max=16})
 UI.ProgBar.type = 'progbar'
 function UI.ProgBar:new(o)
@@ -1146,28 +1175,26 @@ function UI.ProgBar:new(o)
     self:setMinMax()
 
     self.barvar = {val=string.rep(self.barchar, self.max)}
-    self.onfrm = {self.frmclr[1]+0.2,self.frmclr[2]+0.2,self.frmclr[3]+0.2,1}
 
     self.txt = nil
     if self.text and #self.text>0 then
         self.txt = UI.Label{text=self.text, fnt=self.fnt, fntclr=self.fntclr}
     end
-    self.border = UI.HBox{sep=2,frm=self.frm, frmclr=self.frmclr,
-                                                            mode=self.mode}
+    self.border = UI.HBox{sep=2,frm=self.frm,frmclr=self.frmclr,mode=self.mode}
     local barfrm = 2
     if self.barmode=='line' then barfrm=0 end
     if self.barmode=='fill' then self.barchar= ' ' end
     if self.image then
         for _=1, self.max do
-            self.border:add(UI.Label{text='', fnt=self.fnt, fntclr=self.onfrm,
+            self.border:add(UI.Label{text='', fnt=self.fnt, fntclr=self.fntclr,
                                 var=nil, image=self.image, da=self.da,
-                                frm=0,frmclr=self.onfrm})
+                                frm=0,frmclr=self.fntclr})
         end
     else
         self.bar = UI.Label{text=self.barvar.val, fnt=self.fnt,
-                            fntclr=self.onfrm, var=self.barvar,
+                            fntclr=self.fntclr, var=self.barvar,
                             image=self.image, frm=barfrm,
-                            frmclr=self.onfrm, mode=self.barmode}
+                            frmclr=self.fntclr, mode=self.barmode}
         self.border:add(self.bar)
         self.barvar.val = ''
     end
@@ -1215,7 +1242,7 @@ function UI.ProgBar:setSize()
 end
 
 function UI.ProgBar:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         local press = self:mouseCollidePress(1)
@@ -1226,7 +1253,7 @@ function UI.ProgBar:update(dt)
 end
 
 
-UI.List = UI.Class(UI.VBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
+UI.List = Class(UI.VBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
                  com=function() end,image=nil,items={},sep=4,max=4,sel=1})
 UI.List.type = 'list'
 function UI.List:new(o)
@@ -1260,8 +1287,8 @@ function UI.List:new(o)
     self:setHide(self.hide)
     self:setup()
     -- default size
-    if initlen<self.max then
-        for i=self.max,initlen+1,-1 do self:delete(i) end
+    if initlen>self.max then
+        for i=initlen,self.max+1,-1 do self:delete(i) end
     end
     UI.Manager.add(self)
 end
@@ -1308,7 +1335,7 @@ function UI.List:clear()
 end
 
 function UI.List:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         local press = self:mouseCollidePress(1)
@@ -1329,7 +1356,7 @@ function UI.List:update(dt)
 end
 
 
-UI.FoldList = UI.Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
+UI.FoldList = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
                        com=function() end, image=nil,items={},sel=1})
 UI.FoldList.type = 'foldlist'
 function UI.FoldList:new(o)
@@ -1338,7 +1365,7 @@ function UI.FoldList:new(o)
     self.txt = nil
     -- set init size
     if #self.items==0 then
-        self.items = {'Selector1'}
+        self.items = {'Selector'}
     end
     if self.text and (#self.text>0 or self.image) then
         self.txt = UI.Label{text=self.text,fnt=self.fnt,fntclr=self.fntclr,
@@ -1394,6 +1421,7 @@ function UI.FoldList:index(text)
             if self.folditems[i]==text then return i end
         end
     end
+    return
 end
 
 function UI.FoldList:select(index)
@@ -1403,7 +1431,9 @@ function UI.FoldList:select(index)
     else self.var.val = val end
 end
 
-function UI.FoldList:delete(index) table.remove(self.folditems,index) end
+function UI.FoldList:delete(index)
+    table.remove(self.folditems,index)
+end
 
 function UI.FoldList:clear()
     self.folditems = {}
@@ -1423,8 +1453,8 @@ function UI.FoldList:unfold()
 
     self.list = UI.List{x=self.display:get('rectx'),
         y=self.display:get('recty')+hei+frm*2,
-        anchor='nw', fnt=self.FNT, fntclr=self.FNTCLR,
-        frm=2,  frmclr=self.FRMCLR, mode='fill',
+        anchor='nw', fnt=self.fnt, fntclr=self.fntclr,
+        frm=2,  frmclr=self.frmclr, mode='fill',
         var=self.var, com=function()
             if self.display:get('text')~=self.var.val then self:fold() end
                 self.display:set({text=self.var.val})
@@ -1437,7 +1467,7 @@ function UI.FoldList:unfold()
 end
 
 function UI.FoldList:update(dt)
-    dt = dt or UI.getDT()
+    dt = dt or DT
     self:setup()
     if self.focus and not self.hide then
         local press = self:mouseCollidePress(1)
