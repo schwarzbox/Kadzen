@@ -1,5 +1,5 @@
 -- Mon Jul 16 23:34:53 2018
--- (c) Alexander Veledzimovich
+-- (c) Aliaksandr Veledzimovich
 -- model KADZEN
 
 local Tmr = require('lib/tmr')
@@ -25,6 +25,8 @@ function Model:new()
     cmp.GRAVITY = {x=0,y=0}
     cmp.TILESIZE = set.TILESIZE
     self.tmr = Tmr:new()
+    self.defstat = fl.loadLove(set.SAVEDEF) or
+                    {hp={val=1},ammo={val=1}, dist={val=1},chip={val=0}}
 
     self.levels = {{maze='sidewinder',mons={star=9,tank=0,hunter=0},
             key={set.MIDTILEWID-2,set.MIDTILEWID+2,
@@ -78,8 +80,7 @@ function Model:restart()
     self.pause = false
     self.level = 0
     self:reset()
-    local olddata = fl.loadLove(set.SAVE) or {hp={val=1},ammo={val=1},
-                                        dist={val=1},chip={val=0}}
+    local olddata = fl.loadLove(set.SAVE) or self.defstat
     self.stat = olddata
 
     self.score = {['star']={val=0},['tank']={val=0},['hunter']={val=0}}
@@ -166,7 +167,11 @@ function Model:get_level() return self.level end
 function Model:get_score() return self.score end
 
 function Model.save_gamestat(hp,ammo,dist,chip)
-    fl.saveLove(set.SAVE,string.format('return {hp={val=%i},ammo={val=%i},dist={val=%i},chip={val=%i}}',hp,ammo,dist,chip))
+    fl.saveLoveFile(set.SAVE, string.format('return {hp={val=%i},ammo={val=%i},dist={val=%i},chip={val=%i}}',hp,ammo,dist,chip))
+end
+
+function Model.save_gamedef(hp,ammo,dist,chip)
+    fl.saveLoveFile(set.SAVEDEF, string.format('return {hp={val=%i},ammo={val=%i},dist={val=%i},chip={val=%i}}',hp,ammo,dist,chip))
 end
 
 function Model:get_stat()
@@ -363,7 +368,7 @@ function Model:set_maze(type,mons,keynum,ammonum,hpnum,upgradenum)
 
     self:set_avatar(obj.Kadzen{
                 x=math.floor(starttile[1]*set.TILESIZE),
-                    y=math.floor(starttile[2]*set.TILESIZE)})
+                y=math.floor(starttile[2]*set.TILESIZE)})
     self:set_stat()
 end
 
@@ -457,12 +462,22 @@ end
 function Model:endgame(dead)
     self.tmr:tween(2, self, {fade=0})
     self:save_stat()
+
     if dead then
         View:set_fin_scr('GAME OVER')
-        self.save_gamestat(1,1,1,self.stat.chip.val)
+        -- save only chip
+        self.save_gamestat(self.defstat.hp.val,
+                           self.defstat.ammo.val,
+                           self.defstat.dist.val,
+                           self.stat.chip.val)
     else
         View:set_fin_scr('KADZEN WIN')
         local hp,ammo,dist,chip = Model:get_stat()
+        -- save stat for next games as default value
+        hp = hp>self.defstat.hp.val and hp or self.defstat.hp.val
+        ammo = ammo>self.defstat.ammo.val and ammo or self.defstat.ammo.val
+        dist = dist>self.defstat.dist.val and dist or self.defstat.dist.val
+        self.save_gamedef(hp,ammo,dist,chip)
         self.save_gamestat(hp,ammo,dist,chip)
     end
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env lua
 -- LOVUI
--- 2.5
+-- 3.0
 -- GUI (love2d)
 -- lovui.lua
 
 -- MIT License
--- Copyright (c) 2018 Alexander Veledzimovich veledz@gmail.com
+-- Copyright (c) 2018 Aliaksandr Veledzimovich veledz@gmail.com
 
 -- Permission is hereby granted, free of charge, to any person obtaining a
 -- copy of this software and associated documentation files (the "Software"),
@@ -25,26 +25,24 @@
 -- FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 -- DEALINGS IN THE SOFTWARE.
 
--- 3.0
--- + add main color func
--- + highlight slider handle
--- slider float
--- Add drag event for ProgBar.
--- (semi transparent box with values)
--- Make handle fof HBox VBox to drag item.
--- Add fold button for HBox VBox.
+-- 4.0
+-- Make handle pan (fold button) fof HBox VBox to drag item.
+-- Slider float negative
+-- Add drag event for ProgBar (semi transparent box with values)
 
 -- FoldList and List self.sel last added
 -- foldlist stop click when on top
 
--- Refactor Hbox remove function.
--- 3.5
+-- Refactor Hbox remove function
+
+-- 4.5
 -- utf-8 support
 -- faster > 256 obj 60 fps
 
--- all fargs images - imgdata
 
-if arg[1] then print('2.0 LOVUI GUI (love2d)', arg[1]) end
+-- use ImageData when provide images for UI elements
+
+if arg[1] then print('3.0 LOVUI GUI (love2d)', arg[1]) end
 
 -- lua<5.3
 local unpack = table.unpack or unpack
@@ -58,8 +56,14 @@ local FRMCLR = {64/255,64/255,64/255,1}
 local BOXCLR = {FRMCLR[1]-0.1,FRMCLR[2]-0.1,FRMCLR[3]-0.1,1}
 local POPCLR = {FRMCLR[1]-0.05,FRMCLR[2]-0.05,FRMCLR[3]-0.05,0.9}
 local FNT = {nil,16}
-local UI = {kpress={},krelease={},mpress={},mrelease={},
-            mouse={0,0,0,0,false},wheel={0,0}}
+local UI = {
+    kpress={},
+    krelease={},
+    mpress={},
+    mrelease={},
+    mouse={0,0,0,0,false},
+    wheel={0,0}
+}
 -- OOP
 local function Class(Super, class)
     Super = Super or {}
@@ -83,8 +87,15 @@ local function Class(Super, class)
 end
 
 function UI.load()
-    local events = {'keypressed','keyreleased','mousepressed',
-            'mousereleased','mousemoved','wheelmoved','update'}
+    local events = {
+        'keypressed',
+        'keyreleased',
+        'mousepressed',
+        'mousereleased',
+        'mousemoved',
+        'wheelmoved',
+        'update'
+    }
     -- add to love
     local default = {}
     for i=1,#events do
@@ -225,6 +236,39 @@ function Proto.getPivot(itwid,ithei,pivot)
     return x,y
 end
 
+function Proto.getAlign(rectx,recty,rectwid,recthei,frm,wid,hei,align)
+    local cenx, ceny
+    if align == 'w' then
+        cenx = rectx+frm+(wid)/2
+        ceny = recty+(recthei+frm*2)/2
+    elseif align == 'e' then
+        cenx = rectx+rectwid+frm-(wid)/2
+        ceny = recty+(recthei+frm*2)/2
+    elseif align == 'n' then
+        cenx = rectx+(rectwid+frm*2)/2
+        ceny = recty+frm+(hei)/2
+    elseif align == 's' then
+        cenx = rectx+(rectwid+frm*2)/2
+        ceny = recty+recthei+frm-(hei)/2
+    elseif align == 'nw' then
+        cenx = rectx+frm+(wid)/2
+        ceny = recty+frm+(hei)/2
+    elseif align == 'ne' then
+        cenx = rectx+rectwid+frm-(wid)/2
+        ceny = recty+frm+(hei)/2
+    elseif align=='se' then
+        cenx = rectx+rectwid+frm-(wid)/2
+        ceny = recty+recthei+frm-(hei)/2
+    elseif align=='sw' then
+        cenx = rectx+frm+(wid)/2
+        ceny = recty+recthei+frm-(hei)/2
+    else
+        cenx = rectx+(rectwid+frm*2)/2
+        ceny = recty+(recthei+frm*2)/2
+    end
+    return cenx, ceny
+end
+
 function Proto:setWidHei(wid,hei)
     if wid>self.wid then self.wid = wid end
     if hei>self.hei then self.hei = hei end
@@ -233,6 +277,7 @@ function Proto:setWidHei(wid,hei)
 end
 
 function Proto:drawFrame()
+    love.graphics.setLineWidth(1)
     local frmclr = self.deffrm or EMPTY
     if self.frm>0 and self.wid>0 then
         love.graphics.setColor(frmclr)
@@ -405,6 +450,10 @@ function UI.HBox:add(...)
     self:setup()
 end
 
+function UI.HBox:getItems()
+    return self.items
+end
+
 function UI.HBox:setFnt(fnt)
     self.fnt=fnt
     for i=1,#self.items do
@@ -432,6 +481,11 @@ function UI.HBox:update(dt)
             self.x,self.y=self.x+dx,self.y+dy
         end
     end
+end
+
+function UI.HBox:delete(index)
+    self.items[index]:remove()
+    table.remove(self.items,index)
 end
 
 function UI.HBox:remove()
@@ -546,7 +600,7 @@ function UI.PopUp:update(dt)
 end
 
 
-UI.Label = Class(Proto,{text='', fnt=FNT, fntclr=FNTCLR,
+UI.Label = Class(Proto,{text='', align='center', fnt=FNT, fntclr=FNTCLR,
                 var=nil, com=function() end, image=nil,
                 angle=0, da=0, scalex=1, scaley=1, scewx=0,scewy=0})
 UI.Label.type = 'label'
@@ -583,12 +637,15 @@ function UI.Label:setup()
     -- fixed problem with hbox vbox topleft setup
     if not self.x or not self.y then self.x,self.y=0,0 self.anchor='sw' end
 
-    self.rectx, self.recty = self.getAnchor(self.x, self.y, self.wid,self.hei,
-                                        self.frm, self.anchor)
+    self.rectx, self.recty = self.getAnchor(self.x, self.y,
+                                            self.wid,self.hei,
+                                            self.frm, self.anchor)
 
     self.pivx, self.pivy = self.getPivot(wid, hei, self.pivot)
-    self.cenx = self.rectx+(self.wid+self.frm*2)/2
-    self.ceny = self.recty+(self.hei+self.frm*2)/2
+
+    self.cenx, self.ceny = self.getAlign(self.rectx,self.recty,
+                                         self.wid,self.hei,self.frm,
+                                         wid,hei,self.align)
 end
 
 function UI.Label:setImage(data)
@@ -714,9 +771,12 @@ end
 function UI.Input:setFnt(fnt)
     self.Super.setFnt(self,fnt)
     UI.Manager.remove(self.cursor)
-    self.cursor=UI.Label{text='',fnt={fnt[1],fnt[2]-1},
-                        frmclr=self.onclr, frm=self.cursize,
-                        mode='fill', hide=true}
+    self.cursor=UI.Label{
+        text='',
+        fnt={fnt[1],fnt[2]-1}, frmclr=self.onclr, frm=self.cursize,
+        mode='fill',
+        hide=true
+    }
 end
 
 function UI.Input:clear(init)
@@ -798,7 +858,7 @@ end
 
 function UI.Input:erase()
     local itext = self.var.val
-    local last = utf8.offset(itext:sub(1, self.curpos), -1)
+    -- local last = utf8.offset(itext:sub(1, self.curpos), -1)
     if last then
         itext = itext:sub(1,last-1)..itext:sub(self.curpos+1, #itext)
         self.var.val = itext
@@ -867,10 +927,12 @@ function UI.Input:update(dt)
         if self:keyPress('return') then
             UI.Manager.focus(true)
             self:setFocus(false)
+            self:com()
         end
         if self:mousePress(1) and not self:mouseCollide() then
             UI.Manager.focus(true)
             self:setFocus(false)
+            self:com()
         end
     end
 
@@ -879,9 +941,11 @@ function UI.Input:update(dt)
     if press and not self.focus then
         UI.Manager.focus(false)
         self.text = self.var.val:sub(self.leftoff,#self.var.val)
+
         self.curx, self.cury=self:getCursorPosition()
         self:setFocus(true)
     end
+
     return press
 end
 
@@ -1064,7 +1128,7 @@ end
 
 
 UI.Slider = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
-                   image=nil,sep=4,step=1,min=0,max=100})
+                   com=function() end, image=nil,sep=4,step=1,min=0,max=100})
 UI.Slider.type = 'slider'
 function UI.Slider:new(o)
     self.deffrm = self.frmclr
@@ -1081,8 +1145,17 @@ function UI.Slider:new(o)
 
     local barfrm = 2
     if self.image then barfrm = 0 end
-    self.bar = UI.Button{fnt=self.fnt, fntclr=self.fntclr, image=self.image,
-                frm=barfrm, frmclr=self.fntclr, mode='fill',corner={10,10,10}}
+    self.bar = UI.Button{
+        fnt=self.fnt,
+        fntclr=self.fntclr,
+        image=self.image,
+        frm=barfrm,
+        frmclr=self.fntclr,
+        mode='fill',
+        corner={0,0,0},
+        -- round corners
+        -- corner={10,10,10}
+    }
     -- setup cursor wid and max len
     self:setSize()
     self.border:add(self.bar)
@@ -1091,7 +1164,7 @@ function UI.Slider:new(o)
     self.border:set({update = function(...)
                     borupdate(self.border,...)
                     local oldx = math.floor(self.bar:get('x'))
-                    self.bar:set({x=oldx+self.var.val})
+                    self.bar:set({x=oldx+self.var.val,y=self.bar:get('y')})
                     end})
     self.border:set({draw = function()
         if not self.hide then
@@ -1143,8 +1216,10 @@ function UI.Slider:setValue()
     if self.var.val+(newx-oldx)<self.min then return end
     self.var.val = self.var.val+(newx-oldx)
     -- fix mouse
-    love.mouse.setPosition(newx+halfbarwid,self.bar:get('y'))
+    -- love.mouse.setPosition(newx+halfbarwid,self.bar:get('y'))
     self.bar:set({x=newx})
+
+    self:com()
 end
 
 function UI.Slider:setSize()
@@ -1166,8 +1241,15 @@ function UI.Slider:update(dt)
 end
 
 
-UI.ProgBar = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
-            frm=2,image=nil,barchar='|',barmode='fill',sep=4,min=0,max=16})
+UI.ProgBar = Class(UI.HBox,
+    {
+        text='',
+        fnt=FNT, fntclr=FNTCLR, frmclr=FRMCLR, frm=2,
+        image=nil,
+        barchar='|', barmode='fill',
+        sep=4, min=0, max=16
+    }
+)
 UI.ProgBar.type = 'progbar'
 function UI.ProgBar:new(o)
     self.deffrm = self.frmclr
@@ -1253,19 +1335,39 @@ function UI.ProgBar:update(dt)
 end
 
 
-UI.List = Class(UI.VBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
-                 com=function() end,image=nil,items={},sep=4,max=4,sel=1})
+UI.List = Class(
+    UI.VBox,
+    {
+        text='',
+        fnt=FNT, fntclr=FNTCLR, frmclr=FRMCLR, frm=2,
+        com=function() end,
+        image=nil,
+        items={},
+        sep=4,
+        max=4,
+        sel=1
+    }
+)
 UI.List.type = 'list'
 function UI.List:new(o)
     self.deffrm = self.frmclr
     self.var = self.var or {val=''}
     self.txt = nil
     if self.text and (#self.text>0 or self.image) then
-        self.txt = UI.Label{text=self.text,fnt=self.fnt,fntclr=self.fntclr,
-                            image=self.image}
+        self.txt = UI.Label{
+            text=self.text,
+            fnt=self.fnt,
+            fntclr=self.fntclr,
+            image=self.image
+        }
     end
 
-    self.border = UI.VBox{frm=2, sep=2, frmclr=self.frmclr,mode=self.mode}
+    self.border = UI.VBox{
+        frm=self.frm,
+        sep=2,
+        frmclr=self.frmclr,
+        mode=self.mode
+    }
     -- set init size
     if #self.items>self.max then self.max = #self.items end
     if #self.items==0 and self.max~=0 then
@@ -1297,12 +1399,26 @@ function UI.List:add(...)
     local fargs = {...}
     for i=1,#fargs do
         if type(fargs[i])=='table' then
-            self.border:add(UI.Selector{text=fargs[i][1],fnt=self.fnt,
-                            fntclr=self.fntclr, var=self.var,
-                            com=self.com, image=fargs[i][2]})
+            self.border:add(
+                UI.Selector{
+                    text=fargs[i][1],
+                    fnt=self.fnt,
+                    fntclr=self.fntclr,
+                    var=self.var,
+                    com=function() self:com() end,
+                    image=fargs[i][2]
+                }
+            )
         else
-            self.border:add(UI.Selector{text=fargs[i], fnt=self.fnt,
-                            fntclr=self.fntclr, var=self.var, com=self.com})
+            self.border:add(
+                UI.Selector{
+                    text=fargs[i],
+                    fnt=self.fnt,
+                    fntclr=self.fntclr,
+                    var=self.var,
+                    com=function() self:com() end
+                }
+            )
         end
     end
 end
@@ -1320,7 +1436,7 @@ function UI.List:select(index)
     local item = self:getItems()[index]
     if item then
         self.var.val = item:get('text')
-        item.com()
+        self.sel=index
     end
 end
 
@@ -1340,9 +1456,13 @@ function UI.List:update(dt)
     if self.focus and not self.hide then
         local press = self:mouseCollidePress(1)
         local index = self:index(self.var.val)
+
+        if press then self:select(index) end
         local items = self:getItems()
         local _,ywheel = false, false
-        if self:mouseCollide() then ywheel = self:wheelMove() end
+        if self:mouseCollide() then
+            ywheel = self:wheelMove()
+        end
         if (self:keyPress('up') or
             (ywheel and ywheel>0)) and index>1 then
             self:select(index-1)
@@ -1356,8 +1476,17 @@ function UI.List:update(dt)
 end
 
 
-UI.FoldList = Class(UI.HBox,{text='',fnt=FNT,fntclr=FNTCLR,frmclr=FRMCLR,
-                       com=function() end, image=nil,items={},sel=1})
+UI.FoldList = Class(UI.HBox,
+    {
+        text='',
+        fnt=FNT, fntclr=FNTCLR, frmclr=FRMCLR,
+        com=function() end,
+        image=nil,
+        items={},
+        sel=1,
+        side='nw'
+    }
+)
 UI.FoldList.type = 'foldlist'
 function UI.FoldList:new(o)
     self.deffrm = self.frmclr
@@ -1368,8 +1497,12 @@ function UI.FoldList:new(o)
         self.items = {'Selector'}
     end
     if self.text and (#self.text>0 or self.image) then
-        self.txt = UI.Label{text=self.text,fnt=self.fnt,fntclr=self.fntclr,
-                            image=self.image}
+        self.txt = UI.Label{
+            text=self.text,
+            fnt=self.fnt,
+            fntclr=self.fntclr,
+            image=self.image
+        }
     end
 
     local maxlen = 0
@@ -1383,9 +1516,17 @@ function UI.FoldList:new(o)
         if len>maxlen then maxlen = len maxtext = text end
     end
 
-    self.display = UI.Button{text=maxtext, fnt=self.fnt, fntclr=self.fntclr,
-                    var=self.var, com=function() self:unfold() end,
-                    frm=2, frmclr=self.frmclr, mode=self.mode,corner={0,0,0}}
+    self.display = UI.Button{
+        text=maxtext,
+        fnt=self.fnt,
+        fntclr=self.fntclr,
+        var=self.var,
+        com=function() self:unfold() end,
+        frm=2,
+        frmclr=self.frmclr,
+        mode=self.mode,
+        corner={0,0,0}
+    }
 
     if self.sel>#self.items then self.sel = 1 end
     self:select(self.sel)
@@ -1451,15 +1592,23 @@ function UI.FoldList:unfold()
     local hei = self.display:get('hei')
     local frm = self.display:get('frm')
 
-    self.list = UI.List{x=self.display:get('rectx'),
+    self.list = UI.List{
+        x=self.display:get('rectx'),
         y=self.display:get('recty')+hei+frm*2,
-        anchor='nw', fnt=self.fnt, fntclr=self.fntclr,
-        frm=2,  frmclr=self.frmclr, mode='fill',
-        var=self.var, com=function()
-            if self.display:get('text')~=self.var.val then self:fold() end
+        anchor=self.side,
+        fnt=self.fnt, fntclr=self.fntclr, frm=2, frmclr=self.frmclr,
+        mode='fill',
+        var=self.var,
+        com=function()
+            if self.display:get('text')~=self.var.val then
+                self:fold()
+            end
                 self.display:set({text=self.var.val})
             end,
-            items=self.folditems, max=0, sel=self:index(self.var.val)}
+        items=self.folditems,
+        max=0,
+        sel=self:index(self.var.val)
+    }
 
     UI.Manager.focus(false)
     local listitems = self.list:getItems()

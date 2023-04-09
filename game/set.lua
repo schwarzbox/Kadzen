@@ -1,5 +1,5 @@
 -- Mon Jul 16 23:34:53 2018
--- (c) Alexander Veledzimovich
+-- (c) Aliaksandr Veledzimovich
 -- set KADZEN
 
 local fc = require('lib/fct')
@@ -9,6 +9,7 @@ local set = {
     APPNAME = love.window.getTitle(),
     VER = '1.0',
     SAVE = 'kadzensave.lua',
+    SAVEDEF = 'kadzendef.lua',
     FULLSCR = love.window.getFullscreen(),
     WID = love.graphics.getWidth(),
     HEI = love.graphics.getHeight(),

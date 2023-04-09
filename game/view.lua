@@ -1,5 +1,5 @@
 -- Mon Jul 16 23:34:53 2018
--- (c) Alexander Veledzimovich
+-- (c) Aliaksandr Veledzimovich
 -- view KADZEN
 
 local ui = require('lib/lovui')
@@ -39,7 +39,7 @@ function View:set_start_scr()
             text='© LÖVE Development Team https://love2d.org',
             fnt={nil,12}},
         ui.Label{
-            text='© Game by Alexander Veledzimovich veledz@gmail.com',
+            text='© Game by Aliaksandr Veledzimovich veledz@gmail.com',
             fnt={nil,12}},
         ui.Label{
             text='© Music by Eric Matyas www.soundimage.org',

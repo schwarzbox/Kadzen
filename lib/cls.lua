@@ -5,7 +5,7 @@
 -- cls.lua
 
 -- MIT License
--- Copyright (c) 2018 Alexander Veledzimovich veledz@gmail.com
+-- Copyright (c) 2018 Aliaksandr Veledzimovich veledz@gmail.com
 
 -- Permission is hereby granted, free of charge, to any person obtaining a
 -- copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@ if arg[1] then print('1.0 CLS OOP (lua)',arg[1]) end
 -- lua<5.3
 local unpack = table.unpack or unpack
 local utf8 = require('utf8')
+
 -- init random
 math.randomseed(os.time())
 
@@ -49,7 +50,7 @@ function id()
     return ('100000100001-1000-0000'):gsub('[01]',func)
 end
 
-function CLS.Class(Super,class)
+function CLS.Class(Super, class)
     Super = Super or {}
     class = class or {}
     class.Super = Super
@@ -57,11 +58,13 @@ function CLS.Class(Super,class)
     local meta = {__index=Super}
 
     meta.__call = function(self,o)
+                    self.total = self.total + 1
                     o = o or {}
                     -- o.id = id()
-                    o.id = self
+                    -- o.id = o
                     self.__index = self
                     self = setmetatable(o, self)
+
                     if self.new then self.new(self, o) end
                     return self
                 end

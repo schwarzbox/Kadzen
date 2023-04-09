@@ -5,7 +5,7 @@
 -- lovecmp.lua
 
 -- MIT License
--- Copyright (c) 2018 Alexander Veledzimovich veledz@gmail.com
+-- Copyright (c) 2018 Aliaksandr Veledzimovich veledz@gmail.com
 
 -- Permission is hereby granted, free of charge, to any person obtaining a
 -- copy of this software and associated documentation files (the "Software"),
@@ -25,31 +25,7 @@
 -- FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 -- DEALINGS IN THE SOFTWARE.
 
--- 0.25
--- hide locals
--- set gravity set tilesize
--- total update for collision and gravity inside CMP
--- check sin cos for speed - made local copy getDirection
--- vectors
-
--- 0.3
--- stop gravity
--- better rect with pivot
--- jump walk speed and dumping
--- bounce
-
--- add inertion(torque) friction and restitution
--- add particle option rotation spin
-
--- 0.4
--- per pixel collision masksb
--- 0.5
--- center of mass
--- rectangle rotation
--- circle rotation hill (inertion)
--- fall bricks after center (inertion)
--- 0.5
--- border problem collide when out screen
+-- old lovcmp
 
 if arg[1] then print('0.2 LOVCMP Game Components (love2d)', arg[1]) end
 
@@ -61,8 +37,8 @@ local CMP = {DT=0.017,EPSILON=2^-31,GRAVITY={x=0,y=9.83},METER=1,TILESIZE=1}
 function CMP.setObject(obj,data)
     data = data or obj.imgdata
     local wid,hei = data:getDimensions()
-    obj.pivx = wid/2
-    obj.pivy = hei/2
+    obj.pivx = obj.pivx or wid/2
+    obj.pivy = obj.pivy or hei/2
     obj.wid = wid*obj.scale
     obj.hei = hei*obj.scale
     obj.radius = math.min(obj.wid, obj.hei)/2
@@ -475,7 +451,7 @@ function CMP.objectParticle(obj,fsize,clrs,form,time,ptsize,accel,spin)
     particle:setLinearAcceleration(unpack(accel))
     particle:setColors(unpack(grad))
     particle:setSizes(unpack(ptsize))
-    particle:setEmissionArea('uniform', 1, 1, 0)
+    -- particle:setEmissionArea('uniform', 1, 1, 0)
     particle:setRotation(0, 1)
     particle:setSpin(unpack(spin))
     obj.particles[particle] = particle

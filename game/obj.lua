@@ -1,5 +1,5 @@
 -- Mon Jul 16 23:34:53 2018
--- (c) Alexander Veledzimovich
+-- (c) Aliaksandr Veledzimovich
 -- obj KADZEN
 
 local cls = require('lib/cls')

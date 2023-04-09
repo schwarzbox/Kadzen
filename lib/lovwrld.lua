@@ -5,7 +5,7 @@
 -- lovwrld.lua
 
 -- MIT License
--- Copyright (c) 2018 Alexander Veledzimovich veledz@gmail.com
+-- Copyright (c) 2018 Aliaksandr Veledzimovich veledz@gmail.com
 
 -- Permission is hereby granted, free of charge, to any person obtaining a
 -- copy of this software and associated documentation files (the "Software"),
@@ -311,6 +311,22 @@ function WRLD.solve(startdot,finaldot,matrix)
         end
     until startdot[1]==finaldot[1] and startdot[2]==finaldot[2]
     return path
+end
+
+function WRLD.print(matrix)
+    local wid = #matrix[1]
+    local hei = #matrix
+    for y=1,hei do
+        for x=1, wid do
+            local cell = matrix[y][x]
+            if cell==-1 then
+                io.write(matrix[y][x],' ')
+            else
+                io.write(' ',matrix[y][x],' ')
+            end
+        end
+        io.write('\n')
+    end
 end
 
 return WRLD

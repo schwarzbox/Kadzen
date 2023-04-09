@@ -1,20 +1,28 @@
-# Kadzen-LÖVE
+# Kadzen
 
-"Kadzen" is a Shoot Them All game combined with a randomly generated levels.
+v1.0
 
-Goal: Run through the labyrinth. Find a button to open door to the next level. Use TNT to destroy walls and robots. Collect useful items or buy them in Z.NET. More TNT - more FUN!
+"Kadzen" is a Shoot Them All game with randomly generated levels.
 
-Controls: 'W' or '↑' - move up, 'A' or '→'' - move right, 'D' '←' - move left, 'S' '↓' - move down, SPACE' - throw TNT.
+Players must navigate through a labyrinth, searching for a button to unlock the door to the next level. In order to progress, they must strategically use TNT to destroy door, walls and robots. To aid in their mission, players can collect useful items scattered throughout the levels or purchase them in the Z.NET store.
 
-HINT: Use TNT to destroy door.
+Use lighter to start game.
 
-Made with Love2d and some self-made libraries on top of Love Engine.
+More TNT - more FUN!
 
-Music by [Eric Matyas](www.soundimage.org)
+HINT: 'W' or '↑' - up, 'A' or '→'' - right, 'D' '←' - left, 'S' '↓' - down, SPACE' - TNT.
 
-[Release available for Mac OS 64-bit, Windows 64-bit & for Windows 32-bit](https://github.com/schwarzbox/Kadzen-Love2d/releases)
+Made with LÖVE and some self-made libraries on top of the engine.
 
-To run source code: clone repository, download & install [LÖVE 11.1](https://love2d.org) for you system and run kadzen.love.
+[Release available for MacOS-arm64, MacOS-x86, Windows-64bit & Windows-32bit](https://github.com/schwarzbox/Kadzen/releases)
+
+To run source code: clone repository, download & install [LÖVE 11.4](https://love2d.org) for your system.
+
+Engine: [LÖVE Development Team](https://love2d.org/)
+
+Design/Art/Code: [Aliaksandr Veledzimovich](https://twitter.com/veledzimovich)
+
+Music: [Eric Matyas](https://soundimage.org)
 
 ![Screenshot](screenshot/screenshot1.png)
 ![Screenshot](screenshot/screenshot2.png)

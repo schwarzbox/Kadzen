@@ -5,7 +5,7 @@
 -- main.lua
 
 -- MIT License
--- Copyright (c) 2018 Alexander Veledzimovich veledz@gmail.com
+-- Copyright (c) 2018 Aliaksandr Veledzimovich veledz@gmail.com
 
 -- Permission is hereby granted, free of charge, to any person obtaining a
 -- copy of this softwarwe and associated documentation files (the "Software"),
@@ -28,15 +28,11 @@
 -- Music by Eric Matyas
 -- www.soundimage.org
 
--- v2.0
--- show hero
--- tutorial
-
 -- old lua version
 local unpack = table.unpack or unpack
 local utf8 = require('utf8')
 
-local fc = require('lib/fct')
+-- local fc = require('lib/fct')
 local ui = require('lib/lovui')
 
 Model = love.filesystem.load('game/model.lua')()
@@ -81,17 +77,23 @@ function love.load()
     Ctrl:bind('escape','pause', function() Model:set_pause() end)
     Ctrl:bind('lgui+r','cmdr', function() love.event.quit('restart') end)
     Ctrl:bind('lgui+q','cmdq',function() love.event.quit(1) end)
+
+    local upd_title = string.format(
+        '%s %s',
+        set.APPNAME,
+        set.VER
+        -- love.timer.getFPS(),
+        -- fc.len(Model.objects)
+    )
+    love.window.setTitle(upd_title)
 end
 
 function love.update(dt)
-    local upd_title = string.format('%s %s',set.APPNAME, set.VER)
-    love.window.setTitle(upd_title)
-
     -- update model
     Model:update(dt)
     --  ctrl avatar
     local kadzen = Model:get_avatar()
-    if kadzen and not kadzen.dead then
+    if kadzen and not kadzen.dead and not Model.pause then
         if Ctrl:down('up') or Ctrl:down('arrUp') then
             kadzen:move_side('up')
         elseif Ctrl:down('down') or Ctrl:down('arrDown') then

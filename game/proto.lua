@@ -1,5 +1,5 @@
 -- Thu Sep  6 23:35:59 2018
--- (c) Alexander Veledzimovich
+-- (c) Aliaksandr Veledzimovich
 -- proto KADZEN
 
 local fc = require('lib/fct')
